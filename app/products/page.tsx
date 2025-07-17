@@ -8,7 +8,7 @@ export default async function ProductsPage() {
 
     try {
         const productsResponse = await fetch(
-            "process.env.NEXT_PUBLIC_SITE_URL + '/api/products",
+            "http://nextjs-ecommerce-fawn-iota.vercel.app/api/products",
             {
                 cache: "no-cache",
             }
@@ -27,7 +27,7 @@ export default async function ProductsPage() {
 
     try {
         const cartResponse = await fetch(
-            "process.env.NEXT_PUBLIC_SITE_URL + '/api/users/2/cart",
+            "http://nextjs-ecommerce-fawn-iota.vercel.app/api/users/2/cart",
             {
                 cache: "no-cache",
             }

@@ -13,7 +13,7 @@ export default function ShoppingCartList({
 
     async function removeFromCart(productId: string) {
         const response = await fetch(
-            process.env.NEXT_PUBLIC_SITE_URL + "/api/users/2/cart",
+            "http://nextjs-ecommerce-fawn-iota.vercel.app/api/users/2/cart",
             {
                 method: "DELETE",
                 body: JSON.stringify({

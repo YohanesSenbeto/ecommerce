@@ -8,7 +8,7 @@ export default async function ProductDetailPage({
     params: { id: string };
 }) {
     const response = await fetch(
-        process.env.NEXT_PUBLIC_SITE_URL + "/api/products/" + params.id
+        "http://nextjs-ecommerce-fawn-iota.vercel.app/api/products/" + params.id
     );
     const product = await response.json();
 
