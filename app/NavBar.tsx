@@ -1,9 +1,11 @@
-// app/NavBar.tsx
-"use client"; // add this only if you’re using `useState`, `useEffect`, or dynamic behavior
+"use client";
 
 import Link from "next/link";
+import { signOut, useSession } from "next-auth/react";
 
 export default function NavBar() {
+    const { data: session, status } = useSession();
+
     return (
         <nav className="bg-white shadow-md">
             <div className="container mx-auto px-4 py-3 flex justify-between items-center">
@@ -32,6 +34,47 @@ export default function NavBar() {
                             Checkout
                         </Link>
                     </li>
+
+                    {/* Conditionally render links based on session */}
+                    {status === "loading" ? null : session ? (
+                        <>
+                            <li>
+                                <button
+                                    onClick={() =>
+                                        signOut({ callbackUrl: "/" })
+                                    }
+                                    className="text-gray-700 hover:text-black"
+                                >
+                                    Logout
+                                </button>
+                            </li>
+                            <li>
+                                <span className="text-gray-700">
+                                    Hi,{" "}
+                                    {session.user?.name || session.user?.email}
+                                </span>
+                            </li>
+                        </>
+                    ) : (
+                        <>
+                            <li>
+                                <Link
+                                    href="/login"
+                                    className="text-gray-700 hover:text-black"
+                                >
+                                    Login
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    href="/signup"
+                                    className="text-gray-700 hover:text-black"
+                                >
+                                    Signup
+                                </Link>
+                            </li>
+                        </>
+                    )}
                 </ul>
             </div>
         </nav>

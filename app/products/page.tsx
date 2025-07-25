@@ -1,58 +1,74 @@
+// app/products/page.tsx or pages/products.tsx (Next.js)
+"use client";
+
 import ProductsList from "../productList";
+import { useEffect, useState } from "react";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProductsPage() {
-    let products = [];
-    let cartProducts = [];
+export default function ProductsPage() {
+    const [products, setProducts] = useState([]);
+    const [cartProducts, setCartProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    try {
-        const productsResponse = await fetch(
-            "http://nextjs-ecommerce-fawn-iota.vercel.app/api/products",
-            {
-                cache: "no-cache",
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+
+            try {
+                const productRes = await fetch(`${baseUrl}/api/products`, {
+                    cache: "no-cache",
+                });
+
+                if (!productRes.ok) {
+                    throw new Error(
+                        `Failed to fetch products: ${productRes.status}`
+                    );
+                }
+
+                const productData = await productRes.json();
+                setProducts(productData);
+            } catch (err: any) {
+                console.error("Products error:", err.message);
+                setError(err.message);
             }
-        );
 
-        if (!productsResponse.ok) {
-            throw new Error(
-                `Failed to fetch products: ${productsResponse.status}`
-            );
-        }
+            try {
+                const cartRes = await fetch(`${baseUrl}/api/users/2/cart`, {
+                    cache: "no-cache",
+                });
 
-        products = await productsResponse.json();
-    } catch (error) {
-        console.error("Error loading products:", error);
-    }
+                if (!cartRes.ok) {
+                    throw new Error(`Failed to fetch cart: ${cartRes.status}`);
+                }
 
-    try {
-        const cartResponse = await fetch(
-            "http://nextjs-ecommerce-fawn-iota.vercel.app/api/users/2/cart",
-            {
-                cache: "no-cache",
+                const cartData = await cartRes.json();
+                setCartProducts(cartData);
+            } catch (err: any) {
+                console.error("Cart error:", err.message);
             }
-        );
 
-        if (!cartResponse.ok) {
-            throw new Error(`Failed to fetch cart: ${cartResponse.status}`);
-        }
+            setLoading(false);
+        };
 
-        cartProducts = await cartResponse.json();
-    } catch (error) {
-        console.error("Error loading cart:", error);
-    }
+        fetchData();
+    }, [baseUrl]);
+
+    if (loading) return <p>Loading...</p>;
+    if (error) return <p className="text-red-500">Error: {error}</p>;
 
     return (
         <div className="container mx-auto p-8">
             <h1 className="text-4xl font-bold mb-4">🛒 Products</h1>
 
             {products.length > 0 ? (
-                <>
-                    <ProductsList
-                        products={products}
-                        initialCartProducts={cartProducts}
-                    />
-                </>
+                <ProductsList
+                    products={products}
+                    initialCartProducts={cartProducts}
+                />
             ) : (
                 <p className="text-red-500">
                     No products available or failed to load.

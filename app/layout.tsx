@@ -2,7 +2,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import NavBar from "./NavBar"; // ✅ Correct import path for your NavBar
+import NavBar from "./NavBar";
+import Providers from "./providers"; // ✅ Import client wrapper
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -32,8 +33,12 @@ export default function RootLayout({
                 suppressHydrationWarning
                 className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-white`}
             >
-                <NavBar /> {/* ✅ This will render your NavBar at the top */}
-                <main className="min-h-screen">{children}</main>
+                <Providers>
+                    {" "}
+                    {/* ✅ Context now works in client */}
+                    <NavBar />
+                    <main className="min-h-screen">{children}</main>
+                </Providers>
             </body>
         </html>
     );

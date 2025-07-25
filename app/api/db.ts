@@ -1,20 +1,19 @@
+// api/db.ts
 import { MongoClient, Db, ServerApiVersion } from "mongodb";
 
 let cachedClient: MongoClient | null = null;
 let cachedDb: Db | null = null;
 
 export async function connectToDb() {
-  // If cached connection exists, return it immediately
   if (cachedClient && cachedDb) {
     console.log("✅ Using cached MongoDB client and database");
     return { client: cachedClient, db: cachedDb };
   }
 
-  // Read connection URI and DB name from environment variables
-  const uri = process.env.MONGODB_URI;
+  const uri = process.env.DATABASE_URL;
   const dbName = process.env.MONGODB_DB || "Ecommerce-nextjs";
 
-  if (!uri) throw new Error("❌ MONGODB_URI not defined in .env.local");
+  if (!uri) throw new Error("❌ DATABASE_URL not defined in .env.local");
 
   console.log("🔌 Connecting to MongoDB...");
   const client = new MongoClient(uri, {
@@ -25,13 +24,10 @@ export async function connectToDb() {
     },
   });
 
-  // Connect to MongoDB server
   await client.connect();
 
-  // Select database by name
   const db = client.db(dbName);
 
-  // Cache client and db for future reuse
   cachedClient = client;
   cachedDb = db;
 
@@ -42,5 +38,4 @@ export async function connectToDb() {
   return { client, db };
 }
 
-// Export Db type for TypeScript
 export type { Db };

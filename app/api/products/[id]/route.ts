@@ -1,34 +1,31 @@
-import { NextRequest } from 'next/server';
-import { connectToDb } from '../../db'; // adjust if db is not inside /app/api
-
-type Params = {
-  id: string;
-};
+import { NextRequest, NextResponse } from 'next/server';
+import { connectToDb } from '@/app/api/db';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Params }
+  { params }: { params: Promise<{ id: string }> }  // params is a Promise
 ) {
   try {
+    const resolvedParams = await params;  // Await the params
+    const productId = resolvedParams.id;
+
     const { db } = await connectToDb();
-    const productId = params.id;
 
     const product = await db.collection('products').findOne({ id: productId });
 
     if (!product) {
-      return new Response('Product not found!', {
-        status: 404,
-      });
+      return NextResponse.json(
+        { error: 'Product not found' },
+        { status: 404 }
+      );
     }
 
-    return new Response(JSON.stringify(product), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    return NextResponse.json(product, { status: 200 });
   } catch (error) {
-    console.error('Failed to get product:', error);
-    return new Response('Internal Server Error', { status: 500 });
+    console.error('GET /api/products/[id] error:', error);
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }
