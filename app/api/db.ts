@@ -16,15 +16,23 @@ export async function connectToDb() {
   if (!uri) throw new Error("❌ DATABASE_URL not defined in .env.local");
 
   console.log("🔌 Connecting to MongoDB...");
+
   const client = new MongoClient(uri, {
     serverApi: {
       version: ServerApiVersion.v1,
       strict: true,
       deprecationErrors: true,
     },
+    tls: true,               // Use TLS if your MongoDB requires SSL
+    // tlsAllowInvalidCertificates: true, // optionally for local dev with self-signed certs (NOT recommended in prod)
   });
 
-  await client.connect();
+  try {
+    await client.connect();
+  } catch (err) {
+    console.error("MongoDB connection error:", err);
+    throw err; // throw to propagate error
+  }
 
   const db = client.db(dbName);
 

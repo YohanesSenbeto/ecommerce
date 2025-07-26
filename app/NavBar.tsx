@@ -60,17 +60,9 @@ export default function NavBar() {
                             <li>
                                 <Link
                                     href="/login"
-                                    className="text-gray-700 hover:text-black"
+                                    className="text-gray-700 hover:text-black mr-4"
                                 >
                                     Login
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href="/signup"
-                                    className="text-gray-700 hover:text-black"
-                                >
-                                    Signup
                                 </Link>
                             </li>
                         </>

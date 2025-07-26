@@ -1,100 +1,97 @@
-import { NextRequest } from 'next/server';
-import { products } from '@/app/product-data';
-import { connectToDb } from '@/app/api/db';
+// /app/api/users/[id]/cart/route.ts
+import { NextResponse } from "next/server";
 
-type ShoppingCart = Record<string, string[]>;
+// Simulated in-memory cart data (replace with your DB calls)
+const carts: Record<string, Array<{ productId: string; name: string; price: number; quantity: number }>> = {
+  "2": [
+    { productId: "1", name: "Product 1", price: 10, quantity: 1 },
+    { productId: "3", name: "Product 3", price: 15, quantity: 2 },
+  ],
+};
 
-const carts: ShoppingCart = {
-  '1': ['123', '234'],
-  '2': ['345', '456'],
-  '3': ['234'],
-}
-
-type Params = {
-  id: string;
-}
-
-export async function GET(request: NextRequest, { params }: { params: Params }) {
-  const { db } = await connectToDb();
-
+// GET /api/users/:id/cart
+export async function GET(
+  _request: Request,
+  context: { params: { id: string } } | { params: Promise<{ id: string }> }
+) {
+  const params = await context.params;
   const userId = params.id;
-  const userCart = await db.collection('carts').findOne({ userId });
+  if (!userId) {
+    return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+  }
 
-  if (!userCart) {
-    return new Response(JSON.stringify([]), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      }
+  const cart = carts[userId] || [];
+  return NextResponse.json(cart);
+}
+
+// POST /api/users/:id/cart
+// Adds a product or increases quantity in cart
+export async function POST(
+  request: Request,
+  context: { params: { id: string } } | { params: Promise<{ id: string }> }
+) {
+  const params = await context.params;
+  const userId = params.id;
+  if (!userId) {
+    return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+  }
+
+  const body = await request.json().catch(() => null);
+  if (!body || typeof body.productId !== "string") {
+    return NextResponse.json(
+      { error: "Missing or invalid productId in request body" },
+      { status: 400 }
+    );
+  }
+
+  const productId = body.productId;
+  if (!carts[userId]) carts[userId] = [];
+
+  // Find product in user's cart
+  const productInCart = carts[userId].find((p) => p.productId === productId);
+
+  if (productInCart) {
+    productInCart.quantity += 1; // Increase quantity
+  } else {
+    // Add new product - you might fetch product details from DB here
+    carts[userId].push({
+      productId,
+      name: `Product ${productId}`,
+      price: 10,
+      quantity: 1,
     });
   }
 
-  const cartIds = userCart.cartIds;
-  const cartProducts = await db.collection('products').find({ id: { $in: cartIds } }).toArray();
-
-  return new Response(JSON.stringify(cartProducts), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
+  return NextResponse.json(carts[userId]);
 }
 
-type CartBody = {
-  productId: string;
-}
-
-export async function POST(request: NextRequest, { params }: { params: Params }) {
-  const { db } = await connectToDb();
-
+// DELETE /api/users/:id/cart?productId=...
+// Remove a product from cart
+export async function DELETE(
+  request: Request,
+  context: { params: { id: string } } | { params: Promise<{ id: string }> }
+) {
+  const params = await context.params;
   const userId = params.id;
-  const body: CartBody = await request.json();
-  const productId = body.productId;
-
-  const updatedCart = await db.collection('carts').findOneAndUpdate(
-    { userId },
-    { $push: { cartIds: productId } },
-    { upsert: true, returnDocument: 'after' },
-  )
-
-  const cartProducts = await db.collection('products').find({ id: { $in: updatedCart.cartIds } }).toArray()
-
-  return new Response(JSON.stringify(cartProducts), {
-    status: 201,
-    headers: {
-      'Content-Type': 'application/json',
-    }
-  });
-}
-
-export async function DELETE(request: NextRequest, { params }: { params: Params }) {
-  const { db } = await connectToDb();
-
-  const userId = params.id;
-  const body = await request.json();
-  const productId = body.productId;
-
-  const updatedCart = await db.collection('carts').findOneAndUpdate(
-    { userId },
-    { $pull: { cartIds: productId } },
-    { returnDocument: 'after' }
-  );
-
-  if (!updatedCart) {
-    return new Response(JSON.stringify([]), {
-      status: 202,
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    })
+  if (!userId) {
+    return NextResponse.json({ error: "Missing userId" }, { status: 400 });
   }
 
-  const cartProducts = await db.collection('products').find({ id: { $in: updatedCart.cartIds } }).toArray();
+  const url = new URL(request.url);
+  const productId = url.searchParams.get("productId");
 
-  return new Response(JSON.stringify(cartProducts), {
-    status: 202,
-    headers: {
-      'Content-Type': 'application/json',
-    }
-  })
+  if (!productId) {
+    return NextResponse.json(
+      { error: "Missing productId in query parameters" },
+      { status: 400 }
+    );
+  }
+
+  if (!carts[userId]) {
+    return NextResponse.json([], { status: 200 }); // Empty cart
+  }
+
+  carts[userId] = carts[userId].filter((p) => p.productId !== productId);
+
+  return NextResponse.json(carts[userId]);
 }

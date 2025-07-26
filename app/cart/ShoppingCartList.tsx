@@ -29,7 +29,21 @@ export default function ShoppingCartList() {
             const res = await fetch(`/api/users/${userId}/cart`);
             if (!res.ok) throw new Error("Failed to fetch cart");
             const data = await res.json();
-            setCartProducts(data);
+
+            // Log data to check structure (optional)
+            console.log("Cart Products fetched:", data);
+
+            // Map data to ensure every product has an `id`
+            setCartProducts(
+                data.map((p: any, index: number) => ({
+                    id: p.id ?? p.productId ?? `fallback-id-${index}`, // fallback key if missing
+                    name: p.name ?? "Unknown Product",
+                    price: p.price ?? 0,
+                    imageUrl: p.imageUrl ?? "/default-image.png",
+                    category: p.category ?? "General",
+                    description: p.description ?? "No description available",
+                }))
+            );
         } catch (error) {
             console.error(error);
         }
@@ -85,12 +99,12 @@ export default function ShoppingCartList() {
             )}
 
             <ul className="space-y-6">
-                {cartProducts.map((product) => {
+                {cartProducts.map((product, idx) => {
                     const isExpanded = expandedProductId === product.id;
 
                     return (
                         <li
-                            key={product.id}
+                            key={product.id ?? `fallback-key-${idx}`} // Unique key fallback
                             className="bg-white rounded-md shadow p-4 cursor-pointer"
                         >
                             <div

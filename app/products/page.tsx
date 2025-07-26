@@ -1,4 +1,3 @@
-// app/products/page.tsx or pages/products.tsx (Next.js)
 "use client";
 
 import ProductsList from "../productList";
@@ -6,9 +5,16 @@ import { useEffect, useState } from "react";
 
 export const dynamic = "force-dynamic";
 
+type Product = {
+    id: string;
+    name: string;
+    price: number;
+    imageUrl: string;
+};
+
 export default function ProductsPage() {
-    const [products, setProducts] = useState([]);
-    const [cartProducts, setCartProducts] = useState([]);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [cartProducts, setCartProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -17,6 +23,7 @@ export default function ProductsPage() {
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
+            setError(null);
 
             try {
                 const productRes = await fetch(`${baseUrl}/api/products`, {
@@ -24,8 +31,9 @@ export default function ProductsPage() {
                 });
 
                 if (!productRes.ok) {
+                    const errorText = await productRes.text();
                     throw new Error(
-                        `Failed to fetch products: ${productRes.status}`
+                        `Failed to fetch products: ${productRes.status} ${errorText}`
                     );
                 }
 
@@ -42,7 +50,10 @@ export default function ProductsPage() {
                 });
 
                 if (!cartRes.ok) {
-                    throw new Error(`Failed to fetch cart: ${cartRes.status}`);
+                    const errorText = await cartRes.text();
+                    throw new Error(
+                        `Failed to fetch cart: ${cartRes.status} ${errorText}`
+                    );
                 }
 
                 const cartData = await cartRes.json();
